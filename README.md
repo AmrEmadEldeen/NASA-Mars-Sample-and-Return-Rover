@@ -39,6 +39,7 @@ robotics arm to pick up at least five rocks out of the six, and then return them
 # Simulator
 Here you can download the simulator on Linux: <a href="https://s3-us-west-1.amazonaws.com/udacity-robotics/Rover+Unity+Sims/Linux_Roversim.zip" target="_blank">The simulator</a>.
 
+<br>
 
 # Team Members
 - Yousef Amer Awadallah Osman (ID: 1901524)
