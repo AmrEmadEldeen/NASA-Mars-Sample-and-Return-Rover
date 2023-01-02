@@ -26,7 +26,68 @@ def calc_dist(pos1, pos2):
     return np.sqrt((pos1[0]-pos2[0])**2 + (pos1[1] - pos2[1])**2)
 
 
+# Auxiliary function that implements careful forward motion 
+def forward_aux(Rover):
 
+    # If a rock is seen, then enter get_rock mode
+    if Rover.mode != 'stuck' and len(Rover.rock_angles) >= Rover.rock_collect_threshold:
+        Rover.throttle = 0
+        Rover.brake = Rover.brake_set
+        Rover.steer = 0
+        Rover.mode = 'get_rock'
+        return Rover
+
+    # Get pixels in a vertical band ahead of the rover, 40 pixels wide
+    mid_x = []
+    mid_y = []
+
+    for i in range(0, len(Rover.nav_x)):
+        if Rover.nav_y[i] <= 20 and Rover.nav_y[i] >= -20:
+            mid_x.append(Rover.nav_x[i])
+            mid_y.append(Rover.nav_y[i])
+    mid_x = np.array(mid_x)
+    mid_y = np.array(mid_y)
+
+        
+    # Extremely low room to the side, then turn hard
+    if len(mid_y[mid_y >= 0]) < Rover.stop_side:
+        Rover.throttle = 0
+        Rover.brake = 0
+        Rover.steer = -15
+        return Rover
+    elif len(mid_y[mid_y < 0]) < Rover.stop_side:
+        Rover.throttle = 0
+        Rover.brake = 0
+        Rover.steer = 15
+        return Rover
+    # Much more room to right, turn more gradually
+    elif len(mid_y[mid_y < 0]) >= Rover.left_right_ratio * len(mid_y[mid_y >= 0]):
+        Rover.steer = np.clip(np.mean(Rover.nav_angles[Rover.nav_angles < 0]) * 180/np.pi, -15, 15)
+    # Much more room to left, turn more gradually
+    elif len(mid_y[mid_y >= 0]) >= Rover.left_right_ratio * len(mid_y[mid_y < 0]):
+        Rover.steer = np.clip(np.mean(Rover.nav_angles[Rover.nav_angles >= 0]) * 180/np.pi, -15, 15)
+    # If on the way home, follow the bearing to home as closely as possible
+    elif Rover.samples_collected == 6 and (Rover.pos[0] < 84 or Rover.pos[0] > 97 or Rover.pos[1] < 81 or Rover.pos[1] > 88):
+        lo = np.percentile(Rover.nav_angles, 25)
+        hi = np.percentile(Rover.nav_angles, 75)
+        deg_angles = Rover.nav_angles[Rover.nav_angles < hi]
+        deg_angles = deg_angles[deg_angles > lo] * 180/np.pi
+        arr = np.absolute(deg_angles - get_bearing(Rover.pos[0], Rover.pos[1], Rover.init_pos[0], Rover.init_pos[1], Rover.yaw))
+        idx = np.argmin(arr)
+        Rover.steer = np.clip(deg_angles[idx], -15, 15)
+    # Otherwise just follow the steer bias
+    else:
+        Rover.steer = np.clip(np.mean(Rover.nav_angles) * 180/np.pi + Rover.steer_bias, -15, 15)
+
+    # Speed up if we're too slow
+    if Rover.vel < Rover.max_vel:  
+        Rover.throttle = Rover.throttle_set
+    # Otherwise just coast
+    else: 
+        Rover.throttle = 0
+    Rover.brake = 0
+    
+    return Rover
 
 
 
