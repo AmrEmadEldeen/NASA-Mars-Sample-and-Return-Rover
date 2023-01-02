@@ -22,7 +22,8 @@ def get_bearing(x_r, y_r, x_h, y_h, yaw):
         
     return bearing
 
-
+def calc_dist(pos1, pos2):
+    return np.sqrt((pos1[0]-pos2[0])**2 + (pos1[1] - pos2[1])**2)
 
 
 
