@@ -1,4 +1,42 @@
 import numpy as np
+def get_bearing(x_r, y_r, x_h, y_h, yaw):
+    dy = y_r - y_h
+    dx = x_r - x_h
+    if dx == 0:
+        if y_r > y_h:
+            theta = 90
+        else:
+            theta = 270
+    else:
+        theta = np.arctan2(dy, dx) * 180/np.pi
+
+    bearing = 180 + theta - yaw
+
+    # Corrections that lead to smoother path planning
+    if bearing > 180:
+        bearing = bearing - 360
+    elif bearing < -180:
+        bearing = 360 + bearing
+    elif np.absolute(bearing) == 360:
+        bearing = 0
+        
+    return bearing
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # This is where you can build a decision tree for determining throttle, brake and steer 
